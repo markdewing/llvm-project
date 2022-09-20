@@ -39,7 +39,7 @@ RemoteOffloadImpl::RegisterLib(ServerContext *Context,
 
   unloadTargetBinaryDescription(Description, Desc.get(),
                                 HostToRemoteDeviceImage);
-  PM->RTLs.RegisterLib(Desc.get());
+  PM->RTLs.registerLib(Desc.get());
 
   if (Descriptions.find((void *)Description->bin_ptr()) != Descriptions.end())
     freeTargetBinaryDescription(
@@ -59,7 +59,7 @@ Status RemoteOffloadImpl::UnregisterLib(ServerContext *Context,
     return Status::OK;
   }
 
-  PM->RTLs.UnregisterLib(Descriptions[(void *)Request->number()].get());
+  PM->RTLs.unregisterLib(Descriptions[(void *)Request->number()].get());
   freeTargetBinaryDescription(Descriptions[(void *)Request->number()].get());
   Descriptions.erase((void *)Request->number());
 
@@ -90,7 +90,7 @@ Status RemoteOffloadImpl::IsValidBinary(ServerContext *Context,
 Status RemoteOffloadImpl::GetNumberOfDevices(ServerContext *Context,
                                              const Null *Null,
                                              I32 *NumberOfDevices) {
-  std::call_once(PM->RTLs.initFlag, &RTLsTy::LoadRTLs, &PM->RTLs);
+  std::call_once(PM->RTLs.InitFlag, &RTLsTy::loadRTLs, &PM->RTLs);
 
   int32_t Devices = 0;
   PM->RTLsMtx.lock();
