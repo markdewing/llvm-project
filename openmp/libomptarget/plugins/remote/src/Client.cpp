@@ -457,7 +457,7 @@ int32_t RemoteOffloadClient::dataExchange(int32_t SrcDevId, void *SrcPtr,
       /* Error Value */ -1);
 }
 
-int32_t RemoteOffloadClient::dataDelete(int32_t DeviceId, void *TgtPtr) {
+int32_t RemoteOffloadClient::dataDelete(int32_t DeviceId, void *TgtPtr, int32_t Kind) {
   return remoteCall(
       /* Preprocessor */
       [&](auto &RPCStatus, auto &Context) {
@@ -466,6 +466,7 @@ int32_t RemoteOffloadClient::dataDelete(int32_t DeviceId, void *TgtPtr) {
 
         Request->set_device_id(DeviceId);
         Request->set_tgt_ptr((uint64_t)TgtPtr);
+	Request->set_kind(Kind);
 
         RPCStatus = Stub->DataDelete(&Context, *Request, Reply);
         return Reply;
@@ -659,10 +660,10 @@ void *RemoteClientManager::dataAlloc(int32_t DeviceId, int64_t Size,
   return Clients[ClientIdx].dataAlloc(DeviceIdx, Size, HstPtr);
 }
 
-int32_t RemoteClientManager::dataDelete(int32_t DeviceId, void *TgtPtr) {
+int32_t RemoteClientManager::dataDelete(int32_t DeviceId, void *TgtPtr, int32_t Kind) {
   int32_t ClientIdx, DeviceIdx;
   std::tie(ClientIdx, DeviceIdx) = mapDeviceId(DeviceId);
-  return Clients[ClientIdx].dataDelete(DeviceIdx, TgtPtr);
+  return Clients[ClientIdx].dataDelete(DeviceIdx, TgtPtr, Kind);
 }
 
 int32_t RemoteClientManager::dataSubmit(int32_t DeviceId, void *TgtPtr,

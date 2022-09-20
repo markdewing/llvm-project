@@ -78,7 +78,7 @@ public:
   __tgt_target_table *loadBinary(int32_t DeviceId, __tgt_device_image *Image);
 
   void *dataAlloc(int32_t DeviceId, int64_t Size, void *HstPtr);
-  int32_t dataDelete(int32_t DeviceId, void *TgtPtr);
+  int32_t dataDelete(int32_t DeviceId, void *TgtPtr, int32_t Kind);
 
   int32_t dataSubmit(int32_t DeviceId, void *TgtPtr, void *HstPtr,
                      int64_t Size);
@@ -133,7 +133,7 @@ public:
   __tgt_target_table *loadBinary(int32_t DeviceId, __tgt_device_image *Image);
 
   void *dataAlloc(int32_t DeviceId, int64_t Size, void *HstPtr);
-  int32_t dataDelete(int32_t DeviceId, void *TgtPtr);
+  int32_t dataDelete(int32_t DeviceId, void *TgtPtr, int32_t Kind);
 
   int32_t dataSubmit(int32_t DeviceId, void *TgtPtr, void *HstPtr,
                      int64_t Size);

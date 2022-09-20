@@ -93,8 +93,8 @@ int32_t __tgt_rtl_data_retrieve(int32_t DeviceId, void *HstPtr, void *TgtPtr,
   return Manager->dataRetrieve(DeviceId, HstPtr, TgtPtr, Size);
 }
 
-int32_t __tgt_rtl_data_delete(int32_t DeviceId, void *TgtPtr, int32_t) {
-  return Manager->dataDelete(DeviceId, TgtPtr);
+int32_t __tgt_rtl_data_delete(int32_t DeviceId, void *TgtPtr, int32_t Kind) {
+  return Manager->dataDelete(DeviceId, TgtPtr, Kind);
 }
 
 int32_t __tgt_rtl_data_exchange(int32_t SrcDevId, void *SrcPtr,

@@ -131,6 +131,7 @@ message ExchangeData {
 message DeleteData {
   uint64 tgt_ptr = 1;
   int32 device_id = 2;
+  int32 kind = 3;
 }
 
 message TargetRegion {
