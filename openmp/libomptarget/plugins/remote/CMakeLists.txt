@@ -19,12 +19,19 @@ if (NOT(LIBOMPTARGET_ENABLE_EXPERIMENTAL_REMOTE_PLUGIN))
 endif()
 
 find_package(Protobuf)
-find_package(gRPC CONFIG)
+# Uses the module in llvm/cmake/modules/FindGRPC.cmake
+# Can find the Ubuntu system install
+find_package(GRPC)
+#find_package(gRPC CONFIG)
 
 find_program(PROTOC protoc)
 find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin)
 
-if (Protobuf_FOUND AND gRPC_FOUND AND PROTOC AND GRPC_CPP_PLUGIN)
+# Find the Ubuntu system install (libabsl-dev)
+find_library(ABSEIL_SYNC absl_synchronization)
+
+#if (Protobuf_FOUND AND gRPC_FOUND AND PROTOC AND GRPC_CPP_PLUGIN)
+if (Protobuf_FOUND AND PROTOC AND GRPC_CPP_PLUGIN)
   libomptarget_say("Building remote offloading plugin.")
   set(directory "${CMAKE_BINARY_DIR}/include/openmp/libomptarget/plugins/remote/")
   file(MAKE_DIRECTORY ${directory})

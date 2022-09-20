@@ -34,9 +34,10 @@ install(TARGETS omptarget.rtl.rpc LIBRARY DESTINATION "${OPENMP_INSTALL_LIBDIR}"
 target_link_libraries(omptarget.rtl.rpc
   grpc++
   protobuf
-  absl::synchronization
+  absl_synchronization
   ${OPENMP_PTHREAD_LIB}
   omp
+  LLVMSupport
   "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/../../exports")
 
 # Report to the parent scope that we are building a plugin for RPC.

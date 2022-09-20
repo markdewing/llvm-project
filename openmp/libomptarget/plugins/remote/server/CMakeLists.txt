@@ -26,7 +26,9 @@ add_executable(openmp-offloading-server
 target_link_libraries(openmp-offloading-server
         grpc++
         protobuf
-        absl::synchronization
+        absl_synchronization
         ${OPENMP_PTHREAD_LIB}
         omp
+	omptarget
+	LLVMSupport
         "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/../../exports")
