@@ -1,3 +1,6 @@
+# OpenMP Remote Offload testing (branch)
+This branch is for exploring and fixing the OpenMP remote offload plugin.
+
 # The LLVM Compiler Infrastructure
 
 This directory and its sub-directories contain the source code for LLVM,
