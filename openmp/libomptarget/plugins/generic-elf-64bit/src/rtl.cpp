@@ -40,7 +40,7 @@ using namespace llvm::sys;
 
 #include "elf_common.h"
 
-#define NUMBER_OF_DEVICES 4
+#define NUMBER_OF_DEVICES 1
 #define OFFLOAD_SECTION_NAME "omp_offloading_entries"
 
 /// Array of Dynamic libraries loaded for this target.
