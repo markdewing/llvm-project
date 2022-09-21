@@ -7687,7 +7687,7 @@ SDValue DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, const SDLoc &DL) {
   };
 
   // TODO: Support pre-legalization funnel-shift by constant.
-  bool IsRotate = LHSShift.getOperand(0) == RHSShift.getOperand(0);
+  bool IsRotate = LHSShiftArg == RHSShiftArg;
   if (!IsRotate && !(HasFSHL || HasFSHR)) {
     if (TLI.isTypeLegal(VT) && LHS.hasOneUse() && RHS.hasOneUse() &&
         ISD::matchBinaryPredicate(LHSShiftAmt, RHSShiftAmt, MatchRotateSum)) {
@@ -9243,6 +9243,28 @@ static SDValue combineShiftToMULH(SDNode *N, SelectionDAG &DAG,
 
   EVT NarrowVT = LeftOp.getOperand(0).getValueType();
   unsigned NarrowVTSize = NarrowVT.getScalarSizeInBits();
+
+  // return true if U may use the lower bits of its operands
+  auto UserOfLowerBits = [NarrowVTSize](SDNode *U) {
+    if (U->getOpcode() != ISD::SRL || U->getOpcode() != ISD::SRA) {
+      return true;
+    }
+    ConstantSDNode *UShiftAmtSrc = isConstOrConstSplat(U->getOperand(1));
+    if (!UShiftAmtSrc) {
+      return true;
+    }
+    unsigned UShiftAmt = UShiftAmtSrc->getZExtValue();
+    return UShiftAmt < NarrowVTSize;
+  };
+
+  // If the lower part of the MUL is also used and MUL_LOHI is supported
+  // do not introduce the MULH in favor of MUL_LOHI
+  unsigned MulLoHiOp = IsSignExt ? ISD::SMUL_LOHI : ISD::UMUL_LOHI;
+  if (!ShiftOperand.hasOneUse() &&
+      TLI.isOperationLegalOrCustom(MulLoHiOp, NarrowVT) &&
+      llvm::any_of(ShiftOperand->uses(), UserOfLowerBits)) {
+    return SDValue();
+  }
 
   SDValue MulhRightOp;
   if (ConstantSDNode *Constant = isConstOrConstSplat(RightOp)) {
@@ -14155,26 +14177,37 @@ SDValue DAGCombiner::visitFADDForFMACombine(SDNode *N) {
 
   // fadd (fma A, B, (fmul C, D)), E --> fma A, B, (fma C, D, E)
   // fadd E, (fma A, B, (fmul C, D)) --> fma A, B, (fma C, D, E)
+  // This also works with nested fma instructions:
+  // fadd (fma A, B, (fma (C, D, (fmul (E, F))))), G -->
+  // fma A, B, (fma C, D, fma (E, F, G))
+  // fadd (G, (fma A, B, (fma (C, D, (fmul (E, F)))))) -->
+  // fma A, B, (fma C, D, fma (E, F, G)).
   // This requires reassociation because it changes the order of operations.
-  SDValue FMA, E;
-  if (CanReassociate && isFusedOp(N0) &&
-      N0.getOperand(2).getOpcode() == ISD::FMUL && N0.hasOneUse() &&
-      N0.getOperand(2).hasOneUse()) {
-    FMA = N0;
-    E = N1;
-  } else if (CanReassociate && isFusedOp(N1) &&
-             N1.getOperand(2).getOpcode() == ISD::FMUL && N1.hasOneUse() &&
-             N1.getOperand(2).hasOneUse()) {
-    FMA = N1;
-    E = N0;
-  }
-  if (FMA && E) {
-    SDValue A = FMA.getOperand(0);
-    SDValue B = FMA.getOperand(1);
-    SDValue C = FMA.getOperand(2).getOperand(0);
-    SDValue D = FMA.getOperand(2).getOperand(1);
-    SDValue CDE = DAG.getNode(PreferredFusedOpcode, SL, VT, C, D, E);
-    return DAG.getNode(PreferredFusedOpcode, SL, VT, A, B, CDE);
+  if (CanReassociate) {
+    SDValue FMA, E;
+    if (isFusedOp(N0) && N0.hasOneUse()) {
+      FMA = N0;
+      E = N1;
+    } else if (isFusedOp(N1) && N1.hasOneUse()) {
+      FMA = N1;
+      E = N0;
+    }
+
+    SDValue TmpFMA = FMA;
+    while (E && isFusedOp(TmpFMA)) {
+      SDValue FMul = TmpFMA->getOperand(2);
+      if (FMul.getOpcode() == ISD::FMUL && FMul.hasOneUse()) {
+        SDValue C = FMul.getOperand(0);
+        SDValue D = FMul.getOperand(1);
+
+        DAG.MorphNodeTo(FMul.getNode(), PreferredFusedOpcode, FMul->getVTList(),
+                        {C, D, E});
+
+        return FMA;
+      }
+
+      TmpFMA = TmpFMA->getOperand(2);
+    }
   }
 
   // Look through FP_EXTEND nodes to do more combining.

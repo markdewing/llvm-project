@@ -899,11 +899,13 @@ def cl_ext_EQ : CommaJoined<["-"], "cl-ext=">, Group<opencl_Group>, Flags<[CC1Op
 def client__name : JoinedOrSeparate<["-"], "client_name">;
 def combine : Flag<["-", "--"], "combine">, Flags<[NoXarchOption, Unsupported]>;
 def compatibility__version : JoinedOrSeparate<["-"], "compatibility_version">;
-def config : Separate<["--"], "config">, Flags<[NoXarchOption]>,
+def config : Separate<["--"], "config">, Flags<[NoXarchOption, CoreOption]>,
   HelpText<"Specifies configuration file">;
-def config_system_dir_EQ : Joined<["--"], "config-system-dir=">, Flags<[NoXarchOption, HelpHidden]>,
+def no_default_config : Flag<["--"], "no-default-config">, Flags<[NoXarchOption, CoreOption]>,
+  HelpText<"Disable loading default configuration files">;
+def config_system_dir_EQ : Joined<["--"], "config-system-dir=">, Flags<[NoXarchOption, CoreOption, HelpHidden]>,
   HelpText<"System directory for configuration files">;
-def config_user_dir_EQ : Joined<["--"], "config-user-dir=">, Flags<[NoXarchOption, HelpHidden]>,
+def config_user_dir_EQ : Joined<["--"], "config-user-dir=">, Flags<[NoXarchOption, CoreOption, HelpHidden]>,
   HelpText<"User directory for configuration files">;
 def coverage : Flag<["-", "--"], "coverage">, Group<Link_Group>, Flags<[CoreOption]>;
 def cpp_precomp : Flag<["-"], "cpp-precomp">, Group<clang_ignored_f_Group>;
@@ -5486,6 +5488,10 @@ def fsanitize_coverage_pc_table
     : Flag<["-"], "fsanitize-coverage-pc-table">,
       HelpText<"Create a table of coverage-instrumented PCs">,
       MarshallingInfoFlag<CodeGenOpts<"SanitizeCoveragePCTable">>;
+def fsanitize_coverage_control_flow
+    : Flag<["-"], "fsanitize-coverage-control-flow">,
+      HelpText<"Collect control flow of function">,
+      MarshallingInfoFlag<CodeGenOpts<"SanitizeCoverageControlFlow">>;
 def fsanitize_coverage_trace_pc
     : Flag<["-"], "fsanitize-coverage-trace-pc">,
       HelpText<"Enable PC tracing in sanitizer coverage">,

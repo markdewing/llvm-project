@@ -16897,6 +16897,21 @@ Value *CodeGenFunction::EmitAMDGPUBuiltinExpr(unsigned BuiltinID,
                                   RayInverseDir, TextureDescr});
   }
 
+  case AMDGPU::BI__builtin_amdgcn_ds_bvh_stack_rtn: {
+    SmallVector<Value *, 4> Args;
+    for (int i = 0, e = E->getNumArgs(); i != e; ++i)
+      Args.push_back(EmitScalarExpr(E->getArg(i)));
+
+    Function *F = CGM.getIntrinsic(Intrinsic::amdgcn_ds_bvh_stack_rtn);
+    Value *Call = Builder.CreateCall(F, Args);
+    Value *Rtn = Builder.CreateExtractValue(Call, 0);
+    Value *A = Builder.CreateExtractValue(Call, 1);
+    llvm::Type *RetTy = ConvertType(E->getType());
+    Value *I0 = Builder.CreateInsertElement(PoisonValue::get(RetTy), Rtn,
+                                            (uint64_t)0);
+    return Builder.CreateInsertElement(I0, A, 1);
+  }
+
   case AMDGPU::BI__builtin_amdgcn_wmma_bf16_16x16x16_bf16_w32:
   case AMDGPU::BI__builtin_amdgcn_wmma_bf16_16x16x16_bf16_w64:
   case AMDGPU::BI__builtin_amdgcn_wmma_f16_16x16x16_f16_w32:
@@ -19197,10 +19212,6 @@ Value *CodeGenFunction::EmitRISCVBuiltinExpr(unsigned BuiltinID,
   case RISCV::BI__builtin_riscv_crc32c_h:
   case RISCV::BI__builtin_riscv_crc32c_w:
   case RISCV::BI__builtin_riscv_crc32c_d:
-  case RISCV::BI__builtin_riscv_fsl_32:
-  case RISCV::BI__builtin_riscv_fsr_32:
-  case RISCV::BI__builtin_riscv_fsl_64:
-  case RISCV::BI__builtin_riscv_fsr_64:
   case RISCV::BI__builtin_riscv_brev8:
   case RISCV::BI__builtin_riscv_zip_32:
   case RISCV::BI__builtin_riscv_unzip_32: {
@@ -19303,16 +19314,6 @@ Value *CodeGenFunction::EmitRISCVBuiltinExpr(unsigned BuiltinID,
       break;
     case RISCV::BI__builtin_riscv_crc32c_d:
       ID = Intrinsic::riscv_crc32c_d;
-      break;
-
-    // Zbt
-    case RISCV::BI__builtin_riscv_fsl_32:
-    case RISCV::BI__builtin_riscv_fsl_64:
-      ID = Intrinsic::riscv_fsl;
-      break;
-    case RISCV::BI__builtin_riscv_fsr_32:
-    case RISCV::BI__builtin_riscv_fsr_64:
-      ID = Intrinsic::riscv_fsr;
       break;
 
     // Zbkx
