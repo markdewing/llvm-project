@@ -284,7 +284,7 @@ Status RemoteOffloadImpl::DataExchange(ServerContext *Context,
 Status RemoteOffloadImpl::DataDelete(ServerContext *Context,
                                      const DeleteData *Request, I32 *Reply) {
   auto Ret = PM->Devices[Request->device_id()]->RTL->data_delete(
-      mapHostRTLDeviceId(Request->device_id()), (void *)Request->tgt_ptr());
+      mapHostRTLDeviceId(Request->device_id()), (void *)Request->tgt_ptr(), Request->kind());
   Reply->set_number(Ret);
 
   SERVER_DBG("Deleted data from (%p) on device %d", (void *)Request->tgt_ptr(),
