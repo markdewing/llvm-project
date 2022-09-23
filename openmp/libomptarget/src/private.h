@@ -18,6 +18,8 @@
 #include <SourceInfo.h>
 #include <omptarget.h>
 
+#include "llvm/Support/TimeProfiler.h"
+
 #include <cstdint>
 
 extern int targetDataBegin(ident_t *Loc, DeviceTy &Device, int32_t ArgNum,
@@ -189,7 +191,6 @@ printKernelArguments(const ident_t *Loc, const int64_t DeviceId,
   }
 }
 
-#include "llvm/Support/TimeProfiler.h"
 #define TIMESCOPE() llvm::TimeTraceScope TimeScope(__FUNCTION__)
 #define TIMESCOPE_WITH_IDENT(IDENT)                                            \
   SourceInfo SI(IDENT);                                                        \
@@ -197,9 +198,5 @@ printKernelArguments(const ident_t *Loc, const int64_t DeviceId,
 #define TIMESCOPE_WITH_NAME_AND_IDENT(NAME, IDENT)                             \
   SourceInfo SI(IDENT);                                                        \
   llvm::TimeTraceScope TimeScope(NAME, SI.getProfileLocation())
-#else
-#define TIMESCOPE()
-#define TIMESCOPE_WITH_IDENT(IDENT)
-#define TIMESCOPE_WITH_NAME_AND_IDENT(NAME, IDENT)
 
 #endif
