@@ -98,6 +98,9 @@ void timeTraceProfilerCleanup();
 /// Finish a time trace profiler running on a worker thread.
 void timeTraceProfilerFinishThread();
 
+/// Finish a time trace profiler running on a different thread.
+void timeTraceProfilerFinishThreadExternal(llvm::TimeTraceProfiler* prof);
+
 /// Is the time trace profiler enabled, i.e. initialized?
 inline bool timeTraceProfilerEnabled() {
   return getTimeTraceProfilerInstance() != nullptr;

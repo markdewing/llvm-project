@@ -315,6 +315,13 @@ void llvm::timeTraceProfilerFinishThread() {
   TimeTraceProfilerInstance = nullptr;
 }
 
+// Finish TimeTraceProfilerInstance on a different thread
+void llvm::timeTraceProfilerFinishThreadExternal(llvm::TimeTraceProfiler* prof) {
+  auto &Instances = getTimeTraceProfilerInstances();
+  std::lock_guard<std::mutex> Lock(Instances.Lock);
+  Instances.List.push_back(prof);
+}
+
 void llvm::timeTraceProfilerWrite(raw_pwrite_stream &OS) {
   assert(TimeTraceProfilerInstance != nullptr &&
          "Profiler object can't be null");
