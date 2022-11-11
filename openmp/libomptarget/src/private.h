@@ -189,12 +189,16 @@ printKernelArguments(const ident_t *Loc, const int64_t DeviceId,
   }
 }
 
+void checkTimeTraceInitThisThread();
+
 #include "llvm/Support/TimeProfiler.h"
-#define TIMESCOPE() llvm::TimeTraceScope TimeScope(__FUNCTION__)
+#define TIMESCOPE() checkTimeTraceInitThisThread(); llvm::TimeTraceScope TimeScope(__FUNCTION__)
 #define TIMESCOPE_WITH_IDENT(IDENT)                                            \
+  checkTimeTraceInitThisThread();                                              \
   SourceInfo SI(IDENT);                                                        \
   llvm::TimeTraceScope TimeScope(__FUNCTION__, SI.getProfileLocation())
 #define TIMESCOPE_WITH_NAME_AND_IDENT(NAME, IDENT)                             \
+  checkTimeTraceInitThisThread();                                              \
   SourceInfo SI(IDENT);                                                        \
   llvm::TimeTraceScope TimeScope(NAME, SI.getProfileLocation())
 #else

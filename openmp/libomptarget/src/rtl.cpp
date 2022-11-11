@@ -43,6 +43,9 @@ PluginManager *PM;
 
 static char *ProfileTraceFile = nullptr;
 
+// List of TimeTraceProfiler instances on other threads
+std::vector<llvm::TimeTraceProfiler*> profileInstancesOtherThreads;
+
 __attribute__((constructor(101))) void init() {
   DP("Init target library!\n");
 
@@ -71,11 +74,28 @@ __attribute__((destructor(101))) void deinit() {
   delete PM;
 
   if (ProfileTraceFile) {
+    for (auto prof : profileInstancesOtherThreads)
+      llvm::timeTraceProfilerFinishThreadExternal(prof);
     // TODO: add env var for file output
     if (auto E = timeTraceProfilerWrite(ProfileTraceFile, "-"))
       fprintf(stderr, "Error writing out the time trace\n");
 
     timeTraceProfilerCleanup();
+  }
+}
+
+// Check if time trace profiler is already initialized on this thread.
+// If not, initialize it and save a pointer to call finish before
+// writing out the file.
+void checkTimeTraceInitThisThread()
+{
+  if (ProfileTraceFile) {
+    if (llvm::getTimeTraceProfilerInstance() == nullptr) {
+      DP("initializing profiler on thread");
+      llvm::timeTraceProfilerInitialize(500, "libomptarget");
+      llvm::TimeTraceProfiler* prof = llvm::getTimeTraceProfilerInstance();
+      profileInstancesOtherThreads.push_back(prof);
+    }
   }
 }
 
