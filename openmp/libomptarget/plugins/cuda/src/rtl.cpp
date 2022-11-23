@@ -1564,8 +1564,13 @@ int32_t __tgt_rtl_is_valid_binary_info(__tgt_device_image *Image,
     // any GPU with the same major revision and same or higher minor revision.
     int32_t ImageMajor = ArchStr[0] - '0';
     int32_t ImageMinor = ArchStr[1] - '0';
-    if (Major != ImageMajor || Minor < ImageMinor)
+    if (Major != ImageMajor || Minor < ImageMinor) {
+      DP("Compute capability of image not compatible with device. Device: %d "
+         "%d "
+         "Image: %d %d\n",
+         Major, Minor, ImageMajor, ImageMinor);
       return false;
+    }
   }
 
   DP("Image has compatible compute capability: %s\n", Info->Arch);
