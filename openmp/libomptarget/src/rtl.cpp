@@ -44,7 +44,8 @@ PluginManager *PM;
 static char *ProfileTraceFile = nullptr;
 
 // List of TimeTraceProfiler instances on other threads
-std::vector<llvm::TimeTraceProfiler*> profileInstancesOtherThreads;
+std::vector<llvm::TimeTraceProfiler*> *profileInstancesOtherThreads = nullptr;
+std::mutex profLock;
 
 __attribute__((constructor(101))) void init() {
   DP("Init target library!\n");
@@ -65,8 +66,10 @@ __attribute__((constructor(101))) void init() {
 
   ProfileTraceFile = getenv("LIBOMPTARGET_PROFILE");
   // TODO: add a configuration option for time granularity
-  if (ProfileTraceFile)
+  if (ProfileTraceFile) {
+    profileInstancesOtherThreads = new std::vector<llvm::TimeTraceProfiler*>;
     timeTraceProfilerInitialize(500 /* us */, "libomptarget");
+  }
 }
 
 __attribute__((destructor(101))) void deinit() {
@@ -74,13 +77,14 @@ __attribute__((destructor(101))) void deinit() {
   delete PM;
 
   if (ProfileTraceFile) {
-    for (auto prof : profileInstancesOtherThreads)
-      llvm::timeTraceProfilerFinishThreadExternal(prof);
+    for (auto prof : *profileInstancesOtherThreads)
+      timeTraceProfilerFinishThreadExternal(prof);
     // TODO: add env var for file output
     if (auto E = timeTraceProfilerWrite(ProfileTraceFile, "-"))
       fprintf(stderr, "Error writing out the time trace\n");
 
     timeTraceProfilerCleanup();
+    delete profileInstancesOtherThreads;
   }
 }
 
@@ -94,7 +98,8 @@ void checkTimeTraceInitThisThread()
       DP("initializing profiler on thread");
       llvm::timeTraceProfilerInitialize(500, "libomptarget");
       llvm::TimeTraceProfiler* prof = llvm::getTimeTraceProfilerInstance();
-      profileInstancesOtherThreads.push_back(prof);
+      std::lock_guard<std::mutex> Lock(profLock);
+      profileInstancesOtherThreads->push_back(prof);
     }
   }
 }
