@@ -42,6 +42,7 @@ static const char *RTLNames[] = {
 PluginManager *PM;
 
 static char *ProfileTraceFile = nullptr;
+int ProfileGranularity = 500; // microseconds
 
 // List of TimeTraceProfiler instances on other threads
 std::vector<llvm::TimeTraceProfiler*> *profileInstancesOtherThreads = nullptr;
@@ -67,8 +68,13 @@ __attribute__((constructor(101))) void init() {
   ProfileTraceFile = getenv("LIBOMPTARGET_PROFILE");
   // TODO: add a configuration option for time granularity
   if (ProfileTraceFile) {
+    char *ProfGranStr = getenv("LIBOMPTARGET_PROFILE_GRANULARITY");
+    if (ProfGranStr) {
+      ProfileGranularity = atoi(ProfGranStr);
+      DP("Profiling granularity = %d\n",ProfileGranularity);
+    }
     profileInstancesOtherThreads = new std::vector<llvm::TimeTraceProfiler*>;
-    timeTraceProfilerInitialize(500 /* us */, "libomptarget");
+    timeTraceProfilerInitialize(ProfileGranularity, "libomptarget");
   }
 }
 
@@ -96,7 +102,7 @@ void checkTimeTraceInitThisThread()
   if (ProfileTraceFile) {
     if (llvm::getTimeTraceProfilerInstance() == nullptr) {
       DP("initializing profiler on thread");
-      llvm::timeTraceProfilerInitialize(500, "libomptarget");
+      llvm::timeTraceProfilerInitialize(ProfileGranularity, "libomptarget");
       llvm::TimeTraceProfiler* prof = llvm::getTimeTraceProfilerInstance();
       std::lock_guard<std::mutex> Lock(profLock);
       profileInstancesOtherThreads->push_back(prof);
